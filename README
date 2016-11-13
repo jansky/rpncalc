@@ -1,0 +1,303 @@
+rpnCalc is a simple, reverse-polish notation calculator licensed under the MIT license written in C. It supports the following features:
+
+* Basic arithmetic
+* Exponents, roots, and logarithms
+* Trigonometric functions in radians, degrees, and radians
+* Factorial, choose, permutations
+* 1-variable statistics calculations (mean, sum, product, variance, standard deviation)
+
+Building
+--------
+
+Building rpnCalc is as simple as running 'make' and 'make install'.
+
+Running
+-------
+
+rpnCalc can be started by executing the command 'rpncalc' after building and installation.
+
+User's Guide
+------------
+
+rpnCalc is an interactive calculator. After it starts up, you are greeting with a prompt (>). You should enter commands at this prompt to be evaluated
+
+> 4 3 +
+7.000000
+> 7 *
+49.000000
+> 
+
+After each line is executed, the item at the top of the stack is displayed. There are a few exceptions to this, which are explained in more detail below.
+
+Arithmetic
+----------
+
++ - Addition
+- - Subtraction
+/ - Division
+* - Multiplication
+
+> 3 4 *
+12.000000
+> 3 /
+4.000000
+> 2 -
+2.000000
+> 1 +
+3.000000
+
+Exponents, Roots, and Logarithms
+--------------------------------
+
+^ - Raise to power
+rt - nth root
+sq - square root
+log - base 10 logarithm
+log2 - base 2 logarithm
+ln - natural logarithm
+
+> 2 3 ^
+8.000000
+> 27 3 rt
+3.000000
+> 64 sq
+8.000000
+> 1000 log
+3.000000
+> 1024 log2
+10.000000
+> e ln
+1.000000
+
+Trigonometric Functions
+-----------------------
+
+sin - sine
+cos - cosine
+tan - tangent
+tmode - changes degree measure used (default is radians)
+
+> pi 4 / sin
+0.707107
+> deg tmode
+> 90 sin
+1.000000
+> grad tmode
+> 100 cos
+-0.000000
+
+Factorial, Choose, and Permutations
+-----------------------------------
+
+! - factorial
+ncr - choose
+npr - permutation
+
+> 7 !
+5040.000000
+> 10 3 ncr
+120.000000
+> 10 3 npr
+720.000000
+
+Stack Manipulations
+-------------------
+
+inspect - list the contents of the stack
+pop - pop item off the stack
+clear - clear the stack
+
+> 1 3 5 9
+9.000000
+> inspect
+1: 9.000000
+2: 5.000000
+3: 3.000000
+4: 1.000000
+> pop
+5.000000
+> inspect
+1: 5.000000
+2: 3.000000
+3: 1.000000
+> clear
+Stack cleared.
+> inspect
+Stack is empty.
+> 
+
+Miscellaneous Commands
+----------------------
+
+: - print item at top of stack
+; - print item at top of stack, and then pop it
+
+> 3 4 + : 7 *
+7.000000
+49.000000
+> ;
+49.000000
+> inspect
+Stack is empty.
+>
+
+Statistics Calculations
+-----------------------
+
+In order to perform statistical calculations, you must push numbers onto the 'stat stack.' This can be done using the spush or spushm commands. You can list the contents of the stat stack with the sinspect command.
+
+spush
+-----
+
+The spush command pushes one item from the stack to the stat stack.
+
+> 3 spush
+> sinspect
+1: 3.000000
+
+spushm
+------
+
+The spushm pushes multiple items from the stack onto the stat stack. The first number popped off the stack tells the spushm command how many items to push to the stat stack.
+
+> 1 3 4 5
+5.000000
+> inspect
+1: 5.000000
+2: 4.000000
+3: 3.000000
+4: 1.000000
+> 4 spushm   
+> inspect
+Stack is empty.
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> 
+
+You can manipulate data on the stat stack in the same way you can on the normal stack. The spop command pops one number off of the stat stack, and the sclear command clears the stat stack.
+
+After you have the data you want pushed to the stat stack, you can perform statistical calculations.
+
+mean
+----
+
+The mean command gets the arithmetic mean of the numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> mean
+3.250000
+
+sum
+---
+
+The sum command gets the sum of the numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> sum
+13.000000
+
+sumsq
+-----
+
+The sumsq command gets the sum of each number squared in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> sumsq
+51.000000
+
+prod
+----
+
+The prod command gets the product of each number squared in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> prod
+60.000000
+
+vrnce
+-----
+
+The vrnce command gets the population variance of the numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> vrnce
+2.187500
+
+svrnce
+------
+
+The svrnce command gets the sample variance of the numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> svrnce
+2.916667
+
+stddev
+------
+
+The stddev command gets the population standard deviation of the numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> stddev
+1.479020
+
+sstddev
+-------
+
+The sstddev command gets the sample standard deviation of the numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> sstddev
+1.707825
+
+sn
+--
+
+The sn command gets the number of numbers in the stat stack.
+
+> sinspect
+1: 1.000000
+2: 3.000000
+3: 4.000000
+4: 5.000000
+> sn
+4.000000
+
+
+
+
