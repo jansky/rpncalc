@@ -13,8 +13,17 @@ struct rpn_mode *rpn_mode_create(rpn_trig_mode trig_mode)
         return NULL;
     
     nm->trig_mode = trig_mode;
+    nm->mark_on = 0;
+    nm->x = 0;
     
     nm->silent = 0;
+    
+    /* Create variable array */
+    
+    nm->variables = calloc(52, sizeof(double)); // 52 upper and lowercase letters
+    
+    if(nm->variables == NULL)
+        return NULL;    
     
     return nm;
 }
@@ -29,6 +38,67 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
     
     if(strcmp(token, "quit") == 0 || strcmp(token, "exit") == 0)
     	exit(0);
+    
+    if(strcmp(token, "\'") == 0) // Turn the mark on or off
+    {
+        if(mode->mark_on == 1)
+        {
+            // Let's return to normal
+            struct rpn_stack_element *e_new = rpn_stack_element_create_mark();
+            
+            if(e_new == NULL)
+                return -1;
+            
+            if(rpn_stack_push(stack, e_new) != 0)
+                return -2;
+            
+            mode->mark_on = 0;
+        }
+        else
+        {
+            // Let's turn the mark on
+            struct rpn_stack_element *e_new = rpn_stack_element_create_mark();
+            
+            if(e_new == NULL)
+                return -1;
+            
+            if(rpn_stack_push(stack, e_new) != 0)
+                return -2;
+            
+            mode->mark_on = 1;
+        }
+        
+        return 0;
+    }
+    
+    if(mode->mark_on == 1) // If the mark is on, simply push expression to the stack as a string
+    {
+        struct rpn_stack_element *e_new = rpn_stack_element_create_string(token);
+        
+        if(e_new == NULL)
+            return -1;
+            
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    // If the expression begins with ', then push the single token to the string without markers
+    
+    if(token[0] == '\'')
+    {
+        struct rpn_stack_element *e_new = rpn_stack_element_create_string((char*)(token + 1));
+        
+        if(e_new == NULL)
+            return -1;
+            
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+        
     
     if(strcmp(token, "+") == 0) // Addition
     {
@@ -725,6 +795,8 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("%d: %f\n", usernum, e->value.number);
                     if(e->e_type == ET_STRING)
                         printf("%d: \"%s\"\n", usernum, e->value.str);
+                    if(e->e_type == ET_MARK)
+                        printf("%d: MARK\n", usernum);
                 }
                 
                 usernum++;
@@ -1030,6 +1102,8 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("%d: %f\n", usernum, e->value.number);
                     if(e->e_type == ET_STRING)
                         printf("%d: \"%s\"\n", usernum, e->value.str);
+                    if(e->e_type == ET_MARK)
+                        printf("%d: MARK\n", usernum);
                 }
                 
                 usernum++;
@@ -1246,6 +1320,11 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("\"%s\"\n", e_to_print->value.str);
                         break;
                     }
+                    case ET_MARK:
+                    {
+                        printf("MARK\n");
+                        break;
+                    }
                 }
             }
             
@@ -1271,6 +1350,11 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("\"%s\"\n", e_to_print->value.str);
                         break;
                     }
+                    case ET_MARK:
+                    {
+                        printf("MARK\n");
+                        break;
+                    }
                 }
                 
                
@@ -1279,6 +1363,45 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
             
         return 0;
     }
+    
+    if(strcmp(token, "asn") == 0) // Assign value to variable
+    {
+        // Get variable name and value
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_STRING || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, one string and one number.\n");
+            return 1;
+        }
+        
+        char vn = e1->value.str[0];
+        
+        if(((int)vn >= 65 && (int)vn <= 90) || ((int)vn >= 97 && (int)vn <= 122)) // Verify that we have a valid variable name
+        {
+            if(rpn_set_variable(vn, e2->value.number, mode->variables) != 0)
+            {
+                fprintf(stderr, "Error: Unable to set variable.\n");
+                return -3;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Error: Expected, but did not get a single upper or lowercase letter as a variable name.\n");
+            return 1;
+        }
+        
+        return 0;
+    }
+    
     /* Numbers */
     
     double new_number;
@@ -1296,6 +1419,24 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
             return -2;
        
        return 0;
+    }
+    
+    /* Variables */
+    
+    if(strlen(token) == 1)
+    {
+        if(((int)token[0] >= 65 && (int)token[0] <= 90) || ((int)token[0] >= 97 && (int)token[0] <= 122)) // Verify that we have a valid variable name
+        {
+           struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_get_variable(token[0], mode->variables));
+       
+           if(e_new == NULL)
+                return -1;
+            
+           if(rpn_stack_push(stack, e_new) != 0)
+                return -2;
+           
+           return 0;
+         }
     }
     
     /* Strings (i.e. anything else) */

@@ -86,6 +86,8 @@ int main(void)
                     fprintf(stderr, "Error: Stack error.\n");
                     return 1;
                 }
+                case -3:
+                    return 1;
                 default:
                 {
                     fprintf(stderr, "Error: error.\n");
@@ -117,6 +119,8 @@ int main(void)
                         fprintf(stderr, "Error: Stack error.\n");
                         return 1;
                     }
+                    case -3:
+                        return 1;
                     default:
                     {
                         fprintf(stderr, "Error: error.\n");
@@ -145,6 +149,11 @@ int main(void)
                     case ET_STRING:
                     {
                         printf("\"%s\"\n", e_to_print->value.str);
+                        break;
+                    }
+                    case ET_MARK:
+                    {
+                        printf("MARK\n");
                         break;
                     }
                 }

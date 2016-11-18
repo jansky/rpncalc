@@ -6,7 +6,7 @@
 #define RPN_PI 3.14159265359
 #define RPN_E 2.7182818284
 
-typedef enum { ET_NUMBER, ET_STRING } rpn_element_type;
+typedef enum { ET_NUMBER, ET_STRING, ET_MARK } rpn_element_type;
 
 struct rpn_stack_element
 {
@@ -31,6 +31,8 @@ struct rpn_stack
 struct rpn_stack_element *rpn_stack_element_create_number(double number);
 
 struct rpn_stack_element *rpn_stack_element_create_string(char *str);
+
+struct rpn_stack_element *rpn_stack_element_create_mark(void);
 
 struct rpn_stack *rpn_stack_init(size_t max_size);
 
@@ -76,12 +78,26 @@ struct rpn_mode
 {
 	rpn_trig_mode trig_mode;
 	
+	int mark_on;
+	
 	int silent;
+	
+	double *variables;
+	
+	double x;
 };
 
 struct rpn_mode *rpn_mode_create(rpn_trig_mode trig_mode);
 
 int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode);
+
+double eval_for_x(struct rpn_stack *func, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x);
+
+/* Variable Functions */
+
+double rpn_get_variable(char name, double *variables);
+
+int rpn_set_variable(char name, double value, double *variables);
 
 /* Stat Functions */
 
@@ -94,6 +110,10 @@ double rpn_sum(struct rpn_stack *stat_stack);
 double rpn_sum_squared(struct rpn_stack *stat_stack);
 
 double rpn_product(struct rpn_stack *stat_stack);
+
+/* Calculus Functions */
+
+//double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x, double dv);
 
 
 

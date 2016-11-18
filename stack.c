@@ -41,6 +41,18 @@ struct rpn_stack_element *rpn_stack_element_create_string(char *str)
    return ne;
 }
 
+struct rpn_stack_element *rpn_stack_element_create_mark(void)
+{
+    struct rpn_stack_element *ne = malloc(sizeof(struct rpn_stack_element));
+    
+    if(ne == NULL)
+        return NULL;
+        
+   ne->e_type = ET_MARK;
+     
+   return ne;
+}
+
 struct rpn_stack *rpn_stack_init(size_t max_size)
 {
     struct rpn_stack *ns = malloc(sizeof(struct rpn_stack));
