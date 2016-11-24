@@ -1471,7 +1471,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
             return 1;
         }      
    
-        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_nderiv(func, stack, stat_stack, mode, e1->value.number, 0.001));
+        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_nderiv(func, stack, stat_stack, mode, e1->value.number, 0.0000001));
         
         if(e_new == NULL)
             return -1;
