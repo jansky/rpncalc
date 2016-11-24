@@ -135,5 +135,29 @@ struct rpn_stack_element *rpn_stack_peek(struct rpn_stack *stack)
     return stack->contents[stack->top];
 }
 
+int rpn_stack_free(struct rpn_stack *stack)
+{
+    if(stack == NULL)
+        return -1;
+    
+    while(!rpn_stack_is_empty(stack))
+    {
+        struct rpn_stack_element *e = rpn_stack_pop(stack);
+        
+        if(e == NULL)
+            return -1;
+        
+        if(e->value.str != NULL)
+            free(e->value.str);
+    }
+
+    free(stack->contents);
+    
+    free(stack);
+    
+    return 0;
+}    
+    
+
 
 

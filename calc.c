@@ -1402,6 +1402,90 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         return 0;
     }
     
+    if(strcmp(token, "eval") == 0) // Evaluate function for x
+    {
+        // Get value for x
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get one number.\n");
+            return 1;
+        }
+        
+        struct rpn_stack *func = rpn_create_function_stack(stack);
+        
+        if(func == NULL)
+        {
+            fprintf(stderr, "Error: Unable to evaluate expression.\n");
+            return 1;
+        }
+        
+        mode->x = e1->value.number;
+        
+        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_eval_stack(func, stack, stat_stack, mode));
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        rpn_stack_free(func);
+        
+        mode->x = 0;
+       
+        return 0;
+    }
+    
+    if(strcmp(token, "nderv") == 0) // Numerical derivative
+    {
+        // Get value for x
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get one number.\n");
+            return 1;
+        }
+        
+        struct rpn_stack *func = rpn_create_function_stack(stack);
+        
+        if(func == NULL)
+        {
+            fprintf(stderr, "Error: Unable to evaluate expression.\n");
+            return 1;
+        }      
+   
+        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_nderiv(func, stack, stat_stack, mode, e1->value.number, 0.001));
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        rpn_stack_free(func);
+        
+        mode->x = 0;
+       
+        return 0;
+    } 
+    
     /* Numbers */
     
     double new_number;
@@ -1422,6 +1506,19 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
     }
     
     /* Variables */
+    
+    if(strcmp(token, "x") == 0)
+    {
+        struct rpn_stack_element *e_new = rpn_stack_element_create_number(mode->x);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
     
     if(strlen(token) == 1)
     {

@@ -48,6 +48,8 @@ struct rpn_stack_element *rpn_stack_pop(struct rpn_stack *stack);
 
 struct rpn_stack_element *rpn_stack_peek(struct rpn_stack *stack);
 
+int rpn_stack_free(struct rpn_stack *stack);
+
 /* Trig Functions */
 
 typedef enum { TM_RAD, TM_DEG, TM_GRAD } rpn_trig_mode;
@@ -91,7 +93,9 @@ struct rpn_mode *rpn_mode_create(rpn_trig_mode trig_mode);
 
 int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode);
 
-double eval_for_x(struct rpn_stack *func, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x);
+double rpn_eval_stack(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode);
+
+struct rpn_stack *rpn_create_function_stack(struct rpn_stack *stack);
 
 /* Variable Functions */
 
@@ -113,7 +117,7 @@ double rpn_product(struct rpn_stack *stat_stack);
 
 /* Calculus Functions */
 
-//double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x, double dv);
+double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x, double dv);
 
 
 
