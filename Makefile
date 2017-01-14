@@ -1,7 +1,7 @@
 all: rpncalc
 
-rpncalc: calc.o stack.o main.o trig.o math.o stat.o var.o eval.o
-	cc -g -o rpncalc calc.o stack.o main.o trig.o math.o stat.o var.o eval.o -lm
+rpncalc: calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o
+	cc -g -o rpncalc calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o -lm -ldl
 
 calc.o: calc.c
 	cc -g -c calc.c
@@ -26,6 +26,9 @@ var.o: var.c
 
 eval.o: eval.c
 	cc -g -c eval.c
+
+plugin.o: plugin.c
+	cc -g -c plugin.c
 
 clean:
 	rm rpncalc

@@ -28,7 +28,7 @@ struct rpn_mode *rpn_mode_create(rpn_trig_mode trig_mode)
     return nm;
 }
 
-int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode)
+int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin *plugin_root, struct rpn_plugin_functions *functions)
 {
 
     if(token == NULL || stack == NULL)
@@ -1430,7 +1430,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         
         mode->x = e1->value.number;
         
-        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_eval_stack(func, stack, stat_stack, mode));
+        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_eval_stack(func, stack, stat_stack, mode, plugin_root, functions));
         
         if(e_new == NULL)
             return -1;
@@ -1471,7 +1471,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
             return 1;
         }      
    
-        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_nderiv(func, stack, stat_stack, mode, e1->value.number, 0.0000001));
+        struct rpn_stack_element *e_new = rpn_stack_element_create_number(rpn_nderiv(func, stack, stat_stack, mode, plugin_root, functions, e1->value.number, 0.0000001));
         
         if(e_new == NULL)
             return -1;
@@ -1484,7 +1484,57 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         mode->x = 0;
        
         return 0;
-    } 
+    }
+    
+    /* Plugins */
+    
+    if(strcmp(token, "plugins") == 0) // plugins (list plugin metadata)
+    {
+        if(plugin_root == NULL)
+            printf("No plugins loaded.\n");
+        else
+        {
+            struct rpn_plugin *next = plugin_root;
+    	
+			while(next != NULL)
+			{
+				if(next->plugin_info != NULL && next->plugin_info->name != NULL && next->plugin_info->description && next->plugin_info->author != NULL)
+				{
+					printf("%s\nBy %s, Version %f\n%s\n\n", next->plugin_info->name, next->plugin_info->author, next->plugin_info->version, next->plugin_info->description);
+				}
+				
+				next = next->next;
+			}
+        }
+        
+        mode->silent = 1;
+        
+        return 0;
+    }
+    
+    if(plugin_root != NULL)
+    {
+    	struct rpn_plugin *next = plugin_root;
+    	
+    	while(next != NULL)
+    	{
+    		// Make sure the handle and function pointer are valid
+    		
+    		if(next->handle != NULL && next->plugin_main != NULL)
+    		{
+    			// Call plugin main
+    			
+    			int result = next->plugin_main(token, stack, stat_stack, mode, functions);
+    			
+    			if(result != 1) // The plugin did something
+    			{
+    				return result;
+    			}
+    		}
+    		
+    		next = next->next;
+    	}
+    }   
     
     /* Numbers */
     
@@ -1548,10 +1598,3 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
        
     return 0;
 }
-       
-        
-    
-    
-    
-    
-        

@@ -55,7 +55,7 @@ double rpn_permute(double n, double r)
     return start;
 }
 
-double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x, double dv)
+double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin *plugin_root, struct rpn_plugin_functions *functions, double x, double dv)
 {
     if(func == NULL || stack == NULL || stat_stack == NULL || mode == NULL)
         return 0;
@@ -66,7 +66,7 @@ double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_st
     
     
     
-    rise = rpn_eval_stack(func, stack, stat_stack, mode);
+    rise = rpn_eval_stack(func, stack, stat_stack, mode, plugin_root, functions);
     
     
     
@@ -74,7 +74,7 @@ double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_st
     
    
     
-    rise = rise - rpn_eval_stack(func, stack, stat_stack, mode);
+    rise = rise - rpn_eval_stack(func, stack, stat_stack, mode, plugin_root, functions);
     
    
     

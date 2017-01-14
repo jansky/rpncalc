@@ -4,12 +4,16 @@
 #include <stdio.h>
 #include <string.h>
 
-int main(void)
+int main(int argc, char **argv)
 {
     struct rpn_stack *stack;
     struct rpn_stack *stat_stack;
     struct rpn_mode *mode;
+    struct rpn_plugin *plugin_root = NULL;
+    struct rpn_plugin_functions *functions = NULL;
     char *buffer;
+    
+    int num_plugins = 0;
     
     stack = rpn_stack_init(RPN_STACK_MAXSIZE);
     
@@ -39,8 +43,71 @@ int main(void)
     
     printf("rpnCalc\n\n");
     
+    /* Load Plugins */
+    
+    if(argc > 1)
+    {
+    	int i = 1;
+    	
+    	for(; i < argc; i++)
+    	{
+    		struct rpn_plugin *np;
+    		
+    		np = plugin_init(argv[i]);
+    		
+    		if(np != NULL)
+    		{
+    			// If we successfully initialized the plugin, add it to the list
+    			if(plugin_root == NULL)
+    				plugin_root = np;
+    			else
+    			{
+    				struct rpn_plugin *next = plugin_root;
+    				
+    				while(1)
+    				{
+    					if(next->next == NULL)
+    					{
+    						next->next = np;
+    						break;
+    					}
+    					else
+    					{
+    						next = next->next;
+    					}
+    				}
+    			}
+    			
+    			num_plugins++;
+    		}
+    	}
+    }
+    
+    if(num_plugins > 0)
+    {
+    	// If we have plugins, then we need to generate the function interface
+    	
+    	functions = malloc(sizeof(struct rpn_plugin_functions));
+    	
+    	if(functions == NULL)
+    	{
+    		fprintf(stderr, "Error: Could not create plugin interface.\n");
+    		return 1;
+    	}
+    	
+    	functions->stack_element_create_number = &rpn_stack_element_create_number;
+		functions->stack_element_create_string = &rpn_stack_element_create_string;
+		functions->stack_element_create_mark = &rpn_stack_element_create_mark;
+		functions->stack_push = &rpn_stack_push;
+		functions->stack_pop = &rpn_stack_pop;
+		functions->stack_peek = &rpn_stack_peek;
+		functions->stack_is_full = &rpn_stack_is_full;
+		functions->stack_is_empty = &rpn_stack_is_empty;
+	}
+    
     printf("Initialized stack with %d maximum entries.\n", stack->max_size);
-    printf("Initialized stat stack with %d maximum entries.\n\n", stat_stack->max_size);
+    printf("Initialized stat stack with %d maximum entries.\n", stat_stack->max_size);
+    printf("Loaded %d plugins.\n\n", num_plugins);
     
     while(1)
     {
@@ -66,7 +133,7 @@ int main(void)
             ;
         else
         {
-            switch(rpn_evaluate_token(first_token, stack, stat_stack, mode))
+            switch(rpn_evaluate_token(first_token, stack, stat_stack, mode, plugin_root, functions))
             {
                 case 0:
                 {
@@ -99,7 +166,7 @@ int main(void)
             
             while(current_token != NULL)
             {
-                switch(rpn_evaluate_token(current_token, stack, stat_stack, mode))
+                switch(rpn_evaluate_token(current_token, stack, stat_stack, mode, plugin_root, functions))
                 {
                     case 0:
                     {

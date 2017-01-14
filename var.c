@@ -32,5 +32,3 @@ int rpn_set_variable(char name, double value, double *variables)
     else
         return -1;
 }
-
-
