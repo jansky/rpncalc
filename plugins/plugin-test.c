@@ -1,4 +1,4 @@
-#include "rpncalc.h"
+#include "../rpncalc.h"
 #include <string.h>
 
 extern int rpn_plugin_main(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin_functions *link);

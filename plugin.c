@@ -4,6 +4,26 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+struct rpn_plugin *rpn_get_set_plugin_root(struct rpn_plugin *root)
+{
+	static struct rpn_plugin *p_root = NULL;
+	
+	if(p_root == NULL)
+		p_root = root;
+	
+	return p_root;
+}
+
+struct rpn_plugin_functions *rpn_get_set_plugin_functions(struct rpn_plugin_functions *functions)
+{
+	static struct rpn_plugin_functions *p_functions = NULL;
+	
+	if(p_functions == NULL)
+		p_functions = functions;
+	
+	return p_functions;
+}
+
 struct rpn_plugin_info *rpn_plugin_info_create(char *name, char *author, char *description, double version)
 {
 	struct rpn_plugin_info *pi = malloc(sizeof(struct rpn_plugin_info));

@@ -103,7 +103,19 @@ int main(int argc, char **argv)
 		functions->stack_peek = &rpn_stack_peek;
 		functions->stack_is_full = &rpn_stack_is_full;
 		functions->stack_is_empty = &rpn_stack_is_empty;
+		functions->mean = &rpn_mean;
+		functions->variance = &rpn_variance;
+		functions->sum = &rpn_sum;
+		functions->sum_squared = &rpn_sum_squared;
+		functions->product = &rpn_product;
+		functions->stack_free = &rpn_stack_free;
+		functions->stack_init = &rpn_stack_init;
+		functions->eval_stack = &rpn_eval_stack;
+		functions->create_function_stack = &rpn_create_function_stack;
 	}
+	
+	rpn_get_set_plugin_root(plugin_root);
+	rpn_get_set_plugin_functions(functions);
     
     printf("Initialized stack with %d maximum entries.\n", stack->max_size);
     printf("Initialized stat stack with %d maximum entries.\n", stat_stack->max_size);
@@ -133,7 +145,7 @@ int main(int argc, char **argv)
             ;
         else
         {
-            switch(rpn_evaluate_token(first_token, stack, stat_stack, mode, plugin_root, functions))
+            switch(rpn_evaluate_token(first_token, stack, stat_stack, mode))
             {
                 case 0:
                 {
@@ -142,6 +154,10 @@ int main(int argc, char **argv)
                 case 1:
                 {
                     break;
+                }
+                case 2:
+                {
+                	break;
                 }
                 case -1:
                 {
@@ -166,7 +182,7 @@ int main(int argc, char **argv)
             
             while(current_token != NULL)
             {
-                switch(rpn_evaluate_token(current_token, stack, stat_stack, mode, plugin_root, functions))
+                switch(rpn_evaluate_token(current_token, stack, stat_stack, mode))
                 {
                     case 0:
                     {

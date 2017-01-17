@@ -1,10 +1,10 @@
 #include "rpncalc.h"
 
-double rpn_eval_stack(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin *plugin_root, struct rpn_plugin_functions *functions)
+double rpn_eval_stack(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode)
 {
     if(func == NULL || stat_stack == NULL || mode == NULL)
         return 0;
-    
+        
     int i = func->top;
     
     for(; i >= 0; i--)
@@ -17,7 +17,7 @@ double rpn_eval_stack(struct rpn_stack *func, struct rpn_stack *stack, struct rp
         if(e->e_type != ET_STRING || e->value.str == NULL)
             return 0;
         
-        if(rpn_evaluate_token(e->value.str, stack, stat_stack, mode, plugin_root, functions) != 0)
+        if(rpn_evaluate_token(e->value.str, stack, stat_stack, mode) != 0)
             return 0;
     }
     

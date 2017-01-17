@@ -137,14 +137,29 @@ struct rpn_plugin_functions
 	
 	struct rpn_stack_element *(*stack_peek)(struct rpn_stack *);
 	
-	int(*stack_is_empty)(struct rpn_stack *stack);
+	int(*stack_is_empty)(struct rpn_stack *);
 	
-	int(*stack_is_full)(struct rpn_stack *stack);	
+	int(*stack_is_full)(struct rpn_stack *);
 	
+	double(*mean)(struct rpn_stack *);
+	
+	double(*variance)(struct rpn_stack *, int);
+	
+	double(*sum)(struct rpn_stack *);
+	
+	double(*sum_squared)(struct rpn_stack *);
+	
+	double(*product)(struct rpn_stack *);
+	
+	int(*stack_free)(struct rpn_stack *);
+	
+	struct rpn_stack *(*stack_init)(size_t);
+	
+	double(*eval_stack)(struct rpn_stack *, struct rpn_stack *, struct rpn_stack *, struct rpn_mode *);
+	
+	struct rpn_stack *(*create_function_stack)(struct rpn_stack *);
+
 };
-
-typedef int(*rpn_plugin_main_t)(char *, struct rpn_stack *, struct rpn_stack *, struct rpn_mode *, struct rpn_plugin_functions *);
-
 
 struct rpn_plugin
 {
@@ -152,26 +167,31 @@ struct rpn_plugin
 	
 	void *handle;
 	
-	rpn_plugin_main_t plugin_main;
+	int(*plugin_main)(char *, struct rpn_stack *, struct rpn_stack *, struct rpn_mode *, struct rpn_plugin_functions *);
 	
 	struct rpn_plugin *next;
 	
 };
 
+typedef int(*rpn_plugin_main_t)(char *, struct rpn_stack *, struct rpn_stack *, struct rpn_mode *, struct rpn_plugin_functions *);
+
 struct rpn_plugin *plugin_init(char *filename);
 struct rpn_plugin *plugin_destroy(struct rpn_plugin *plugin);
 
+struct rpn_plugin *rpn_get_set_plugin_root(struct rpn_plugin *root);
+struct rpn_plugin_functions *rpn_get_set_plugin_functions(struct rpn_plugin_functions *functions);
+
 /* Calculus Functions */
 
-double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin *plugin_root, struct rpn_plugin_functions *functions, double x, double dv);
+double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, double x, double dv);
 
 /* Calculator Functions */
 
 struct rpn_mode *rpn_mode_create(rpn_trig_mode trig_mode);
 
-int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin *plugin_root, struct rpn_plugin_functions *functions);
+int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode);
 
-double rpn_eval_stack(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode, struct rpn_plugin *plugin_root, struct rpn_plugin_functions *functions);
+double rpn_eval_stack(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_stack *stat_stack, struct rpn_mode *mode);
 
 struct rpn_stack *rpn_create_function_stack(struct rpn_stack *stack);
 

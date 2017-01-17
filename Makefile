@@ -1,4 +1,4 @@
-all: rpncalc
+all: rpncalc plugins
 
 rpncalc: calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o
 	cc -g -o rpncalc calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o -lm -ldl
@@ -30,12 +30,17 @@ eval.o: eval.c
 plugin.o: plugin.c
 	cc -g -c plugin.c
 
+.PHONY: clean plugins
 clean:
 	rm rpncalc
 	rm *.o
+	$(MAKE) -C plugins clean
 
 install:
 	cp rpncalc /usr/bin
 
 deinstall:
 	rm /usr/bin/rpncalc
+
+plugins:
+	$(MAKE) -C plugins
