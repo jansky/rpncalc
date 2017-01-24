@@ -53,6 +53,20 @@ struct rpn_stack_element *rpn_stack_element_create_mark(void)
    return ne;
 }
 
+struct rpn_stack_element *rpn_stack_element_create_bool(char boolean)
+{
+	struct rpn_stack_element *ne = malloc(sizeof(struct rpn_stack_element));
+    
+    if(ne == NULL)
+        return NULL;
+        
+   ne->e_type = ET_BOOL;
+   
+   ne->value.boolean = boolean;
+   
+   return ne;
+}
+
 struct rpn_stack *rpn_stack_init(size_t max_size)
 {
     struct rpn_stack *ns = malloc(sizeof(struct rpn_stack));

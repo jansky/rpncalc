@@ -18,6 +18,13 @@ struct rpn_mode *rpn_mode_create(rpn_trig_mode trig_mode)
     
     nm->silent = 0;
     
+    /* Create condition num_stack */
+    
+    nm->condition_stack = rpn_num_stack_init(RPN_MAX_NESTING);
+    
+    if(nm->condition_stack == NULL)
+    	return NULL;   
+    
     /* Create variable array */
     
     nm->variables = calloc(52, sizeof(double)); // 52 upper and lowercase letters
@@ -34,11 +41,52 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
     if(token == NULL || stack == NULL)
         return -1;
     
+    if(mode->condition_stack == NULL)
+    	return -1;
+    
     struct rpn_plugin *plugin_root = rpn_get_set_plugin_root(NULL);
     struct rpn_plugin_functions *functions = rpn_get_set_plugin_functions(NULL);
     
-   
+    /* Conditionals */
     
+    if(strcmp(token, "end") == 0) // Ends an iftrue or iffalse block
+    {
+    	if(rpn_num_stack_is_empty(mode->condition_stack))
+    	{
+    		fprintf(stderr, "Error: Unexpected end.\n");
+    		return 1;
+    	}
+    	
+    	int pop = rpn_num_stack_pop(mode->condition_stack);
+    	
+    	if(pop == -1)
+    		return -2;
+    	
+    	return 0;
+    }
+    
+    if(!rpn_num_stack_is_empty(mode->condition_stack))
+    {
+    	int condition = rpn_num_stack_peek(mode->condition_stack);
+    	
+    	if(condition == -1)
+    		return -2;
+    	
+    	if(condition == 0)
+    	{
+    		// We're in an iftrue or iffalse block where the condition hasn't been met
+    		// The code here ensures that if blocks can be properly nested
+    		
+    		if(strcmp(token, "iftrue") == 0 || strcmp(token, "iffalse") == 0)
+    		{
+    			if(rpn_num_stack_push(mode->condition_stack, 0) != 0)
+            		return -2;
+            }
+            
+            return 0;
+        }
+    }
+        
     /* Instructions */
     
     if(strcmp(token, "quit") == 0 || strcmp(token, "exit") == 0)
@@ -802,6 +850,13 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("%d: \"%s\"\n", usernum, e->value.str);
                     if(e->e_type == ET_MARK)
                         printf("%d: MARK\n", usernum);
+                    if(e->e_type == ET_BOOL)
+                    {
+                    	if(e->value.boolean)
+                        	printf("%d: true\n", usernum);
+                        else
+                        	printf("%d: false\n", usernum);
+                    }
                 }
                 
                 usernum++;
@@ -1109,6 +1164,13 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("%d: \"%s\"\n", usernum, e->value.str);
                     if(e->e_type == ET_MARK)
                         printf("%d: MARK\n", usernum);
+                    if(e->e_type == ET_BOOL)
+                    {
+                    	if(e->value.boolean)
+                        	printf("%d: true\n", usernum);
+                        else
+                        	printf("%d: false\n", usernum);
+                    }
                 }
                 
                 usernum++;
@@ -1330,6 +1392,14 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                         printf("MARK\n");
                         break;
                     }
+                    case ET_BOOL:
+                    {
+                        if(e_to_print->value.boolean)
+                        	printf("true\n");
+                        else
+                        	printf("false\n");
+                        break;
+                    }
                 }
             }
             
@@ -1358,6 +1428,14 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
                     case ET_MARK:
                     {
                         printf("MARK\n");
+                        break;
+                    }
+                    case ET_BOOL:
+                    {
+                        if(e_to_print->value.boolean)
+                        	printf("true\n");
+                        else
+                        	printf("false\n");
                         break;
                     }
                 }
@@ -1490,6 +1568,332 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
        
         return 0;
     }
+    
+    /* Conditionals */
+    
+    if(strcmp(token, "==") == 0) // Equals
+    {
+        double num1;
+        double num2;
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, two numbers.\n");
+            return 1;
+        }
+        
+        num1 = e1->value.number;
+        num2 = e2->value.number;
+        
+        struct rpn_stack_element *e_new;
+        
+        if(num1 == num2)
+        	e_new = rpn_stack_element_create_bool(1);
+        else
+        	e_new = rpn_stack_element_create_bool(0);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    if(strcmp(token, "!=") == 0) // Does not equal
+    {
+        double num1;
+        double num2;
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, two numbers.\n");
+            return 1;
+        }
+        
+        num1 = e1->value.number;
+        num2 = e2->value.number;
+        
+        struct rpn_stack_element *e_new;
+        
+        if(num1 != num2)
+        	e_new = rpn_stack_element_create_bool(1);
+        else
+        	e_new = rpn_stack_element_create_bool(0);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    if(strcmp(token, ">") == 0) // Greater than
+    {
+        double num1;
+        double num2;
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, two numbers.\n");
+            return 1;
+        }
+        
+        num1 = e1->value.number;
+        num2 = e2->value.number;
+        
+        struct rpn_stack_element *e_new;
+        
+        if(num2 > num1)
+        	e_new = rpn_stack_element_create_bool(1);
+        else
+        	e_new = rpn_stack_element_create_bool(0);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    if(strcmp(token, "<") == 0) // Less than
+    {
+        double num1;
+        double num2;
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, two numbers.\n");
+            return 1;
+        }
+        
+        num1 = e1->value.number;
+        num2 = e2->value.number;
+        
+        struct rpn_stack_element *e_new;
+        
+        if(num2 < num1)
+        	e_new = rpn_stack_element_create_bool(1);
+        else
+        	e_new = rpn_stack_element_create_bool(0);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    if(strcmp(token, ">=") == 0) // Greater than or equal to
+    {
+        double num1;
+        double num2;
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, two numbers.\n");
+            return 1;
+        }
+        
+        num1 = e1->value.number;
+        num2 = e2->value.number;
+        
+        struct rpn_stack_element *e_new;
+        
+        if(num2 >= num1)
+        	e_new = rpn_stack_element_create_bool(1);
+        else
+        	e_new = rpn_stack_element_create_bool(0);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    if(strcmp(token, "<=") == 0) // Less than or equal to
+    {
+        double num1;
+        double num2;
+        
+        struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+        struct rpn_stack_element *e2 = rpn_stack_pop(stack);
+        
+        if(e1 == NULL || e2 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_NUMBER || e2->e_type != ET_NUMBER)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, two numbers.\n");
+            return 1;
+        }
+        
+        num1 = e1->value.number;
+        num2 = e2->value.number;
+        
+        struct rpn_stack_element *e_new;
+        
+        if(num2 <= num1)
+        	e_new = rpn_stack_element_create_bool(1);
+        else
+        	e_new = rpn_stack_element_create_bool(0);
+        
+        if(e_new == NULL)
+            return -1;
+        
+        if(rpn_stack_push(stack, e_new) != 0)
+            return -2;
+        
+        return 0;
+    }
+    
+    if(strcmp(token, "iftrue") == 0)
+    {
+    	struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+    	
+    	if(e1 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_BOOL)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, one boolean.\n");
+            return 1;
+        }
+        
+        if(e1->value.boolean)
+        {
+        	// The condition is true, so set up an iftrue environment
+        	
+        	if(rpn_num_stack_is_full(mode->condition_stack))
+        	{
+        		fprintf(stderr, "Error: Too much nesting.\n");
+            	return 1;
+            }
+            
+            if(rpn_num_stack_push(mode->condition_stack, 1) != 0)
+            	return -2;
+            
+        }
+        else
+        {
+        	if(rpn_num_stack_is_full(mode->condition_stack))
+        	{
+        		fprintf(stderr, "Error: Too much nesting.\n");
+            	return 1;
+            }
+            
+            if(rpn_num_stack_push(mode->condition_stack, 0) != 0)
+            	return -2;
+        }
+      	
+      	return 0;
+   }
+   
+   if(strcmp(token, "iffalse") == 0)
+    {
+    	struct rpn_stack_element *e1 = rpn_stack_pop(stack);
+    	
+    	if(e1 == NULL)
+        {
+            fprintf(stderr, "Error: Expected more stack elements.\n");
+            return 1;
+        }
+        
+        if(e1->e_type != ET_BOOL)
+        {
+            fprintf(stderr, "Error: Expected, but did not get, one boolean.\n");
+            return 1;
+        }
+        
+        if(!e1->value.boolean)
+        {
+        	// The condition is true, so set up an iftrue environment
+        	
+        	if(rpn_num_stack_is_full(mode->condition_stack))
+        	{
+        		fprintf(stderr, "Error: Too much nesting.\n");
+            	return 1;
+            }
+            
+            if(rpn_num_stack_push(mode->condition_stack, 1) != 0)
+            	return -2;
+            
+        }
+        else
+        {
+        	if(rpn_num_stack_is_full(mode->condition_stack))
+        	{
+        		fprintf(stderr, "Error: Too much nesting.\n");
+            	return 1;
+            }
+            
+            if(rpn_num_stack_push(mode->condition_stack, 0) != 0)
+            	return -2;
+        }
+      	
+      	return 0;
+   }   	
     
     /* Plugins */
     

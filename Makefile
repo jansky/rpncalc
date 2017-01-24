@@ -1,7 +1,7 @@
 all: rpncalc plugins
 
-rpncalc: calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o
-	cc -g -o rpncalc calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o -lm -ldl
+rpncalc: calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o num_stack.o
+	cc -g -o rpncalc calc.o stack.o main.o trig.o math.o stat.o var.o eval.o plugin.o num_stack.o -lm -ldl
 
 calc.o: calc.c
 	cc -g -c calc.c
@@ -29,6 +29,9 @@ eval.o: eval.c
 
 plugin.o: plugin.c
 	cc -g -c plugin.c
+
+num_stack.o: num_stack.c
+	cc -g -c num_stack.c
 
 .PHONY: clean plugins
 clean:

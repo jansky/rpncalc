@@ -239,6 +239,14 @@ int main(int argc, char **argv)
                         printf("MARK\n");
                         break;
                     }
+                    case ET_BOOL:
+                    {
+                        if(e_to_print->value.boolean)
+                        	printf("true\n");
+                        else
+                        	printf("false\n");
+                        break;
+                    }
                 }
             }
             

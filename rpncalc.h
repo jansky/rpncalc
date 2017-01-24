@@ -3,10 +3,11 @@
 /* Stack Functions */
 
 #define RPN_STACK_MAXSIZE 1000
+#define RPN_MAX_NESTING 100
 #define RPN_PI 3.14159265359
 #define RPN_E 2.7182818284
 
-typedef enum { ET_NUMBER, ET_STRING, ET_MARK } rpn_element_type;
+typedef enum { ET_NUMBER, ET_STRING, ET_MARK, ET_BOOL } rpn_element_type;
 
 struct rpn_stack_element
 {
@@ -14,6 +15,7 @@ struct rpn_stack_element
     {
         double number;
         char *str;
+        char boolean;
     } value;
     
     rpn_element_type e_type;
@@ -34,6 +36,8 @@ struct rpn_stack_element *rpn_stack_element_create_string(char *str);
 
 struct rpn_stack_element *rpn_stack_element_create_mark(void);
 
+struct rpn_stack_element *rpn_stack_element_create_bool(char boolean);
+
 struct rpn_stack *rpn_stack_init(size_t max_size);
 
 int rpn_stack_destroy(struct rpn_stack *stack);
@@ -50,7 +54,30 @@ struct rpn_stack_element *rpn_stack_peek(struct rpn_stack *stack);
 
 int rpn_stack_free(struct rpn_stack *stack);
 
+/* Number Stack */
 
+struct rpn_num_stack
+{
+    int *contents;
+    
+    int top;
+    
+    int max_size;
+};
+
+struct rpn_num_stack *rpn_num_stack_init(size_t max_size);
+
+int rpn_num_stack_destroy(struct rpn_num_stack *stack);
+
+int rpn_num_stack_push(struct rpn_num_stack *stack, int element);
+
+int rpn_num_stack_is_empty(struct rpn_num_stack *stack);
+
+int rpn_num_stack_is_full(struct rpn_num_stack *stack);
+
+int rpn_num_stack_pop(struct rpn_num_stack *stack);
+
+int rpn_num_stack_peek(struct rpn_num_stack *stack);
 
 /* Trig Functions */
 
@@ -107,6 +134,8 @@ struct rpn_mode
 	double *variables;
 	
 	double x;
+	
+	struct rpn_num_stack *condition_stack;
 };
 
 
