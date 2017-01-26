@@ -72,3 +72,17 @@ double rpn_nderiv(struct rpn_stack *func, struct rpn_stack *stack, struct rpn_st
     
     return (rise/dv);
 }
+
+int rpn_dequals(double d1, double d2, double precision)
+{
+	double eps1 = fabs(d1), eps2 = fabs(d2), eps;
+	
+	eps = (eps1 > eps2) ? eps1 : eps2;
+	
+	if (eps == 0.0)
+		return 1;
+	
+	eps *= precision;
+	
+	return (fabs(d1 - d2) < eps);
+}

@@ -1596,7 +1596,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         
         struct rpn_stack_element *e_new;
         
-        if(num1 == num2)
+        if(rpn_dequals(num1, num2, RPN_EQ_PRECISION))
         	e_new = rpn_stack_element_create_bool(1);
         else
         	e_new = rpn_stack_element_create_bool(0);
@@ -1635,7 +1635,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         
         struct rpn_stack_element *e_new;
         
-        if(num1 != num2)
+        if(!rpn_dequals(num1, num2, RPN_EQ_PRECISION))
         	e_new = rpn_stack_element_create_bool(1);
         else
         	e_new = rpn_stack_element_create_bool(0);
@@ -1752,7 +1752,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         
         struct rpn_stack_element *e_new;
         
-        if(num2 >= num1)
+        if(rpn_dequals(num1, num2, RPN_EQ_PRECISION) || num2 > num1)
         	e_new = rpn_stack_element_create_bool(1);
         else
         	e_new = rpn_stack_element_create_bool(0);
@@ -1791,7 +1791,7 @@ int rpn_evaluate_token(char *token, struct rpn_stack *stack, struct rpn_stack *s
         
         struct rpn_stack_element *e_new;
         
-        if(num2 <= num1)
+        if(rpn_dequals(num1, num2, RPN_EQ_PRECISION) || num2 < num1)
         	e_new = rpn_stack_element_create_bool(1);
         else
         	e_new = rpn_stack_element_create_bool(0);

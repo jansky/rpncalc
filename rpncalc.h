@@ -4,6 +4,7 @@
 
 #define RPN_STACK_MAXSIZE 1000
 #define RPN_MAX_NESTING 100
+#define RPN_EQ_PRECISION 0.000001
 #define RPN_PI 3.14159265359
 #define RPN_E 2.7182818284
 
@@ -102,6 +103,8 @@ double rpn_factorial(double number);
 double rpn_choose(double n, double r);
 
 double rpn_permute(double n, double r);
+
+int rpn_dequals(double d1, double d2, double precision);
 
 /* Variable Functions */
 
